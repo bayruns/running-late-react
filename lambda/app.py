@@ -100,6 +100,18 @@ def signup():
     conn.close()
     return json.dumps(response_data)
 
+@app.route("/invite", methods=['POST'], cors=True)
+def get_invite_link():
+    data_in = app.current_request.json_body
+    address = data_in['address']
+    token = data_in['token']
+    conn = get_connection()
+    user_id = None
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM users WHERE token LIKE %s", token)
+        for row in cur:
+            user_id = row["user_id"]
+    return "http//:localhost:3000/confirm-invite/" + str(user_id) + "/" + address
 
 def get_confirmation_code():
     return ''.join(random.choice(string.ascii_uppercase) for x in range(4))

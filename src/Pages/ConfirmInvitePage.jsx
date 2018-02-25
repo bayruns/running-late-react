@@ -185,7 +185,7 @@ export default class SignupPage extends React.Component {
                     </Col>
                 </Row>
                 <Row className="justify-content-center">
-                    <Button color="info" size="lg" className="running-late-text">Confirm</Button>
+                    <Button onClick={this.submit} color="info" size="lg" className="running-late-text">Confirm</Button>
                 </Row>
             </Container>
         );
