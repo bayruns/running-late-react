@@ -105,6 +105,42 @@ def get_confirmation_code():
     return ''.join(random.choice(string.ascii_uppercase) for x in range(4))
 
 
+@app.route("/confirm_invite", methods=['POST'], cors=True)
+def confirm_invite():
+    data_in = app.current_request.json_body
+    days = data_in["days"]
+    starting_address = data_in["starting_address"]
+    ending_address = data_in["ending_address"]
+    departure_time = data_in["departure_time"]
+    transportation_method = data_in["transportation_method"]
+    boss_id = data_in["boss_id"]
+    token = data_in["token"]
+
+    conn = get_connection()
+    valid_found = False
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM users WHERE token LIKE %s", token)
+        for row in cur:
+            user_id = row["user_id"]
+
+    with conn.cursor() as cur:
+        for day in days:
+            cur.execute(
+                'INSERT INTO routes (starting_address, ending_address, departure_time, day_of_week) VALUES(%s, %s, %s, %s, %s)',
+                (starting_address, ending_address, departure_time, day))
+    conn.commit()
+
+    with conn.cursor() as cur:
+        cur.execute("UPDATE users SET boss_id = %s WHERE user_id = %s",
+                    (boss_id, user_id))
+
+    conn.commit()
+
+    response_data = {"success": True}
+    conn.close()
+    return json.dumps(response_data)
+
+
 @app.route("/login", methods=['POST'], cors=True)
 def login():
     data_in = app.current_request.json_body
@@ -281,14 +317,14 @@ def is_train_delayed(stationID, expectedTimestamp=time.time()):
 # print(delays("135S"))
 
 
-def is_likely_to_be_late_by_driving(start_address, end_address):
+def is_likely_to_be_late(start_address, end_address, transportation_mode="driving"):
     gmaps = googlemaps.Client(key=keys.google_maps_api_key)
     return True
 
     now = datetime.datetime.now()
     directions_result = gmaps.directions(start_address,
                                          end_address,
-                                         mode="driving",
+                                         mode=transportation_mode,
                                          departure_time=now
                                          )
 
@@ -305,7 +341,7 @@ def is_likely_to_be_late_by_driving(start_address, end_address):
 
     directions_result = gmaps.directions(start_address,
                                          end_address,
-                                         mode="driving",
+                                         mode=transportation_mode,
                                          departure_time=now,
                                          traffic_model="pessimistic"
                                          )
@@ -323,11 +359,6 @@ def is_likely_to_be_late_by_driving(start_address, end_address):
         return True
 
     return False
-
-
-# is_likely_to_be_late_by_driving()
-
-# print("DONE")
 
 
 # Main method that gets run by cron job
@@ -349,34 +380,60 @@ def main(event=None, context=None):
 
     now = datetime.datetime.now()
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    minutes_since_midnight = int((now - midnight).seconds / 60) - 300  # TODO This is really bad, fix soon
+    minutes_since_midnight = int((now - midnight).seconds / 60)  # - 300  # TODO This is really bad, fix soon
 
     print("MINUTES SINCE MIDNIGHT", minutes_since_midnight)
 
+    people = []
     with conn.cursor() as cur:
         users_running_late = []
         cur.execute(
-            "SELECT * FROM routes r JOIN users U "
-            "USING(route_id) WHERE r.day_of_week = %s "
+            "SELECT * FROM users u JOIN routes r "
+            "USING(user_id) WHERE r.day_of_week = %s "
             "AND r.departure_time <= %s "
-            "AND r.departure_time > %s - 5", (day_of_week, minutes_since_midnight, minutes_since_midnight)
+            "AND r.departure_time > %s - 150", (day_of_week, minutes_since_midnight, minutes_since_midnight)
         )
         for row in cur:
-            name = row['first']
-            starting_address = row['starting_address']
-            ending_address = row['ending_address']
+            people.append(row)
 
-            if is_likely_to_be_late_by_driving(starting_address, ending_address):
-                users_running_late.append(name)
+        for person in people:
+            cur.execute("SELECT * FROM users WHERE user_id = %s", person["boss_id"])
+            for row in cur:
+                person["boss_phone"] = row["phone"]
+
+            if is_likely_to_be_late(person["starting_address"], person["ending_address"]):
+                users_running_late.append(person['first'])
 
         conn.close()
 
-    if len(users_running_late) > 0:
-        send_text("5555555555",
-                  "RunningLate.fyi Alert 🚗: There is traffic on the NJ Turnpike. " + str(
-                      users_running_late) + " may be late for work")
+        boss_to_people = {}
 
-    return "DONE"
+        for person in people:
+            boss_phone = person.get("boss_phone")
+            boss_list = boss_to_people.get(boss_phone)
+            if boss_list is None:
+                boss_list = []
+            boss_list.append(person)
+            boss_to_people[boss_phone] = boss_list
+
+        print("DONE")
+
+        for key, _ in boss_to_people.items():
+
+            people_with_this_boss = boss_to_people.get(key)
+
+            names = ""
+            for p in people_with_this_boss:
+                names += p["first"] + ", "
+                send_text(p["phone"],
+                          "RunningLate.fyi Alert 🚗: There is traffic on the NJ Turnpike. You will probably be late for work. Your boss has been notified")
+
+            if names is not None:
+                names = names[:-2]
+            send_text(key,
+                      "RunningLate.fyi Alert 🚗: There is traffic on the NJ Turnpike. The following employees may be late for work: " + names)
+
+        return "DONE"
 
 
 # app()
