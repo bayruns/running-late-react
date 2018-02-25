@@ -11,10 +11,13 @@ export default class DashboardPage extends React.Component {
 
     constructor() {
         super();
+        //creater a new binder and bind all of the methods in this class
+        var binder = new Binder();
+        binder.bindAll(this, DashboardPage);
         this.state = {
             name: '',
             employees: [{ name: '' }],
-            address: "",
+            address: '',
             link: ""
         };
     }
