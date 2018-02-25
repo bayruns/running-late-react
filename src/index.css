@@ -27,6 +27,13 @@ body {
   color: white;
 }
 
+.running-late-text{
+  font-family: 'Yanone Kaffeesatz',sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: white;
+}
+
 .jumobtron-transparent{
   background: transparent;
 }
