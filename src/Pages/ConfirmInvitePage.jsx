@@ -152,7 +152,7 @@ export default class SignupPage extends React.Component {
                         </Form>
                     </Col>
                     <Col xs={{ size: 6, offset: 0 }} className="running-late-text">
-                        <Label for="to-address">From Address</Label>
+                        <Label for="to-address">To Address</Label>
 
                         <p id="to-address" className="running-late-text">
                             {this.state.ending_address}
