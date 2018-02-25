@@ -44,3 +44,13 @@ body {
   margin-top: 5px;
   margin-bottom: 5px;
 }
+
+.employee{
+  display:flex; 
+  flex-direction:row;
+  padding-bottom: 5px;
+}
+
+.btnSubmitType{
+  float: right;
+}
