@@ -3,6 +3,8 @@ import { Jumbotron, Container, Row, Button, Form, Input, InputGroup, InputGroupA
 import RunningLateNavbar from '../Navbars/RunningLateNavbar.jsx';
 import { Link } from 'react-router-dom';
 import { PAGES } from '../Routing/constants.js';
+import Binder from '../util/binder.js';
+import RequestHandler from '../util/RequestHandler.js';
 import './landingpage.css';
 
 export default class DashboardPage extends React.Component {
@@ -30,7 +32,23 @@ export default class DashboardPage extends React.Component {
 
     handleSubmit = (evt) => {
         const { name, employees } = this.state;
-        alert(`Incorporated: ${name} with ${employees.length} employees`);
+        // alert(`Incorporated: ${name} with ${employees.length} employees`);
+        console.log(this.state.employees);
+
+        const endpoint = "employeesInvitationList/";
+        const success = "Employees Invited Successfully.";
+        const error = "Employees Invitation Failed.";
+        const data = {
+            emails: this.state.employees
+        }
+        const self = this;
+        var callback = function (responseData) {
+            self.setState({ itemRows: responseData });
+            console.log(responseData)
+            self.props.history.push("/dashboard");
+        };
+        var handler = new RequestHandler();
+        handler.post(endpoint, data, success, error, callback);
     }
 
     handleAddemployee = () => {
@@ -47,26 +65,25 @@ export default class DashboardPage extends React.Component {
                 <Row className="justify-content-center">
                     <Col xs={{ size: 12, offset: 0 }} sm={{ size: 11 }} md={{ size: 8 }} lg={{ size: 5 }}>
                         <h1 className="running-late-title">Invite Employees</h1>
-                        <Form onSubmit={this.handleSubmit}>
-
+                        <Form>
                             <div className="inviteEmployees">
 
-                            {this.state.employees.map((employee, idx) => (
-                                <div className="employee ">
-                                    <Input
-                                        type="email"
-                                        placeholder={`Email of Employee #${idx + 1}`}
-                                        value={employee.name}
-                                        onChange={this.handleemployeeNameChange(idx)}
-                                    />
-                                    &nbsp;
+                                {this.state.employees.map((employee, idx) => (
+                                    <div className="employee ">
+                                        <Input
+                                            type="email"
+                                            placeholder={`Email of Employee #${idx + 1}`}
+                                            value={employee.name}
+                                            onChange={this.handleemployeeNameChange(idx)}
+                                        />
+                                        &nbsp;
                                     <Button type="button" onClick={this.handleRemoveemployee(idx)} className="small">X</Button>
-                                </div>
-                            ))}
+                                    </div>
+                                ))}
                             </div>
                             <Button type="button" onClick={this.handleAddemployee} className="small">Add employee</Button>
                             &nbsp; &nbsp;
-                            <Button className="btnSubmitType">Invite All</Button>
+                            <Button className="btnSubmitType" onClick={this.handleSubmit}>Invite All</Button>
                         </Form>
                     </Col>
                 </Row>
