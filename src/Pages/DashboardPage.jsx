@@ -14,10 +14,12 @@ export default class DashboardPage extends React.Component {
         this.state = {
             name: '',
             employees: [{ name: '' }],
+            address: "",
+            link: ""
         };
     }
 
-    handleNameChange = (evt) => {
+/*     handleNameChange = (evt) => {
         this.setState({ name: evt.target.value });
     }
 
@@ -29,21 +31,19 @@ export default class DashboardPage extends React.Component {
 
         this.setState({ employees: newemployees });
     }
+    */
 
     handleSubmit = (evt) => {
-        const { name, employees } = this.state;
-        // alert(`Incorporated: ${name} with ${employees.length} employees`);
-        console.log(this.state.employees);
 
-        const endpoint = "employeesInvitationList/";
-        const success = "Employees Invited Successfully.";
-        const error = "Employees Invitation Failed.";
+        const endpoint = "invite";
+        const success = "Link Created Successfully.";
+        const error = "Link Creatiation Failed.";
         const data = {
-            emails: this.state.employees
+            address: this.state.address
         }
         const self = this;
         var callback = function (responseData) {
-            self.setState({ itemRows: responseData });
+            self.setState({ link: responseData });
             console.log(responseData)
             self.props.history.push("/dashboard");
         };
@@ -51,12 +51,19 @@ export default class DashboardPage extends React.Component {
         handler.post(endpoint, data, success, error, callback);
     }
 
+    /*
     handleAddemployee = () => {
         this.setState({ employees: this.state.employees.concat([{ name: '' }]) });
     }
 
     handleRemoveemployee = (idx) => () => {
         this.setState({ employees: this.state.employees.filter((s, sidx) => idx !== sidx) });
+    } */
+
+    updateAddress(e) {
+        this.setState({
+            address: e.target.value
+        })
     }
 
     render() {
@@ -66,24 +73,16 @@ export default class DashboardPage extends React.Component {
                     <Col xs={{ size: 12, offset: 0 }} sm={{ size: 11 }} md={{ size: 8 }} lg={{ size: 5 }}>
                         <h1 className="running-late-title">Invite Employees</h1>
                         <Form>
-                            <div className="inviteEmployees">
-
-                                {this.state.employees.map((employee, idx) => (
-                                    <div className="employee ">
-                                        <Input
-                                            type="email"
-                                            placeholder={`Email of Employee #${idx + 1}`}
-                                            value={employee.name}
-                                            onChange={this.handleemployeeNameChange(idx)}
-                                        />
-                                        &nbsp;
-                                    <Button type="button" onClick={this.handleRemoveemployee(idx)} className="small">X</Button>
-                                    </div>
-                                ))}
+                            <InputGroup className="vertical-spaced">
+                                <InputGroupAddon> Address: </InputGroupAddon>
+                                <Input type='text' onChange={this.updateAddress} />
+                            </InputGroup>
+                            &nbsp;
+                            <Button className="" onClick={this.handleSubmit}>Get Link</Button>
+                            &nbsp; 
+                            <div>
+                                <Input type="text" placeholder={this.state.link} />
                             </div>
-                            <Button type="button" onClick={this.handleAddemployee} className="small">Add employee</Button>
-                            &nbsp; &nbsp;
-                            <Button className="btnSubmitType" onClick={this.handleSubmit}>Invite All</Button>
                         </Form>
                     </Col>
                 </Row>
