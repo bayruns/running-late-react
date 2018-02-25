@@ -1,0 +1,30 @@
+.masthead {
+    min-height: 100vh;
+    max-height: 100vh;
+    height: 100vh;
+    position: relative;
+    display: table;
+    width: 100%;
+    padding-top: 6rem;
+    padding-bottom: 15rem;
+    background-image: url('../img/city.svg');
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    overflow-y: hidden;
+}
+
+h1 {
+    font-size: 4rem;
+    margin: 0;
+    padding: 0;
+}
+
+@media (min-width: 992px) {
+    .masthead {
+        height: 100vh;
+    }
+    h1 {
+        font-size: 5.5rem;
+    }
+}
